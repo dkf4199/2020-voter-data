@@ -1,6 +1,5 @@
 <?php
-//Read the text file and find the anomoly
-
+//Read the text files and find the anomolies
 $files = array(
   'ArizonaEdisonData.txt',
   'GeorgiaEdisonData.txt',
@@ -11,19 +10,7 @@ $files = array(
 );
 
 $chars = array('T','Z');
-/*
-foreach($files as $f){
 
-  $count = 0;
-  $myfile = fopen("./votes/$f", "r") or die("Unable to open $f");
-  // Output one line until end-of-file
-  while(!feof($myfile)) {
-    $count++;
-  }
-
-  print $f.' : '.$count.' lines.<br />';
-}
-*/
 foreach($files as $f){
 
   $file = fopen("votes/$f", "r");
@@ -57,12 +44,15 @@ foreach($files as $f){
   //print '<br /><br />';
   ?>
   <h1><?= $f ?></h1>
-  <table width="60%">
+  <table width="80%">
     <thead>
       <th>Time</th>
-      <th>Current Total</th>
-      <th>Next Total</th>
-      <th>Difference</th>
+      <th>Trump Current</th>
+      <th>Trump Next</th>
+      <th>Trump Diff</th>
+      <th>Biden Current</th>
+      <th>Biden Next</th>
+      <th>Diff</th>
     </thead>
     <tbody>
   <?php
@@ -72,23 +62,39 @@ foreach($files as $f){
   print sizeof($votes).' lines in file.';
   */
   $instances = 0;
-  $curr_total = $next_total = $total_difference = 0;
+  $curr_total = $next_total = $trump_difference = $trump_total_difference = 0;
+  $biden_curr = $biden_next = $biden_difference = $biden_total_difference = 0;
   // Now, go through votes array and find lines where trump tally decreases from previous line
   for ($i=0; $i<sizeof($votes); $i++){
+    //Get trump counts for current and next line in arr
     $curr_total = (int) $votes[$i]['TrumpVotes'];
     $next_total = (int) $votes[$i+1]['TrumpVotes'];
 
-
+    //If there is a NEGATIVE tally in sequence...
     if ($curr_total > $next_total){
       if ($next_total > 0){
-        $time = str_replace($chars,' ',$votes[$i]['TimeStamp']);
+        //Get the Biden counts for comparison
+        $biden_curr = (int) $votes[$i]['BidenVotes'];
+        $biden_next = (int) $votes[$i+1]['BidenVotes'];
+        $biden_difference = $biden_next - $biden_curr;
+        $biden_total_difference += $biden_difference;
+
+        $time = str_replace($chars,' ',$votes[$i+1]['TimeStamp']);
 
         $instances++;
-        $difference = $curr_total - $next_total;
-        $total_difference += $difference;
+        $trump_difference = $next_total - $curr_total;
+        $trump_total_difference += $trump_difference;
 
         //print $votes[$i+1]['Timestamp'].'<br />';
-        print '<tr><td>'.$time.'</td><td>'.$curr_total.'</td><td>'.$next_total.'</td><td>-'.number_format($difference).' votes.</td></tr>';
+        print '<tr><td>'.$time.
+              '</td><td>'.$curr_total.
+              '</td><td>'.$next_total.
+              '</td><td>'.number_format($trump_difference).
+              ' votes.</td>'.
+              '</td><td>'.$biden_curr.
+              '</td><td>'.$biden_next.
+              '</td><td>'.number_format($biden_difference).
+              ' votes.</td></tr>';
       }
     }
   }
@@ -97,6 +103,7 @@ foreach($files as $f){
   </table>
   <?php
   print '<p>'.$instances." times that this happens the $f file.</p>";
-  print '<p>Total Vote Loss:  -'.$total_difference.'</p>';
+  print '<p>Trump Vote Loss/Gain:  '.$trump_total_difference.'</p>';
+  print '<p>Biden Vote Loss/Gain:  '.$biden_total_difference.'</p>';
 
 }
